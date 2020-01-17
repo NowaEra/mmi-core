@@ -1,0 +1,30 @@
+{
+    "name": "nowaera/mmi-core",
+    "type": "mmi-package",
+    "description": "Core package",
+    "keywords": [
+        "mmi"
+    ],
+    "license": "MIT",
+    "authors": [],
+    "require": {
+        "php": ">=5.6",
+        "nowaera/mmi-log": "dev-master@dev"
+    },
+    "suggest": {
+    },
+    "conflict": {
+    },
+    "autoload": {
+        "psr-4": {
+            "Mmi\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+        }
+    },
+    "require-dev": {
+        "symfony/phpunit-bridge": "^4.1"
+    }
+}
