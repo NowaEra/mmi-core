@@ -36,22 +36,28 @@ abstract class AbstractKernel
         if (true === $this->booted) {
             return;
         }
-        $builder = $this->getContainerBuilder();
-        $builder->getParameterBag()->add($this->getKernelParameters());
         $this->dumpContainer();
 
         $this->booted = true;
     }
 
+    private function prepareContainer(ContainerBuilder $builder): void
+    {
+        $builder->getParameterBag()->add($this->getKernelParameters());
+    }
+
     private function dumpContainer(): void
     {
         $file = $this->getCacheDir() . '/' . $this->env . '/container.php';
+        if (false === is_dir(dirname($file))) {
+            mkdir(dirname($file), 0777, true);
+        }
         if (false === $this->debug && file_exists($file)) {
             require_once $file;
-            $container = new MmiCachedContainer();
+            $container = new \MmiCachedContainer();
         } else {
-            $containerBuilder = new ContainerBuilder();
-            // ...
+            $containerBuilder = $this->getContainerBuilder();
+            $this->prepareContainer($containerBuilder);
             $containerBuilder->compile();
 
             if (false === $this->debug) {
@@ -86,7 +92,8 @@ abstract class AbstractKernel
             ) ?: $this->getProjectDir(),
             'kernel.environment' => $this->env,
             'kernel.debug'       => $this->debug,
-            'kernel.cache_dir'   => $this->getCacheDir(),
+            'kernel.cache_dir'   => '%kernel.project_dir%/var/cache',
+            'kernel.version'     => self::VERSION
         ];
     }
 
