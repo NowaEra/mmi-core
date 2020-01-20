@@ -35,6 +35,7 @@ class HttpKernel
      * @param Request $request
      *
      * @return Response
+     * @throws \Exception
      */
     public function handle(Request $request): Response
     {
