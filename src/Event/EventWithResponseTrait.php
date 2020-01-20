@@ -4,16 +4,15 @@ declare(strict_types=1);
 namespace Mmi\Event;
 
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Contracts\EventDispatcher\Event;
 
 /**
- * Class AbstractResponseEvent
+ * Trait EventWithResponseTrait
  * Package Mmi\Event
  */
-abstract class AbstractResponseEvent extends Event
+trait EventWithResponseTrait
 {
     /** @var Response|null */
-    private $response;
+    protected $response;
 
     /**
      * @return Response|null
@@ -25,9 +24,21 @@ abstract class AbstractResponseEvent extends Event
 
     /**
      * @param Response|null $response
+     *
+     * @return EventWithResponseTrait
      */
-    public function setResponse(?Response $response): void
+    public function setResponse(?Response $response): EventWithResponseTrait
     {
         $this->response = $response;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasResponse(): bool
+    {
+        return null !== $this->response;
     }
 }

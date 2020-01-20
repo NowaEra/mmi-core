@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace Mmi\App;
 
 use Mmi\Event\KernelController;
-use Mmi\Event\KernelRequestEvent;
+use Mmi\Event\KernelRequest;
 use Mmi\Event\KernelResponse;
+use Mmi\Event\KernelTerminate;
+use Mmi\Exception\ControllerException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,25 +38,46 @@ class HttpKernel
      */
     public function handle(Request $request): Response
     {
-        $kernelRequest = new KernelRequestEvent($request);
-        $this->eventDispatcher->dispatch($kernelRequest);
+        try {
+            $kernelRequest = new KernelRequest($request);
+            $this->eventDispatcher->dispatch($kernelRequest);
 
-        if (null === $kernelRequest->getController()) {
-            throw new \Exception('No controller found');
+            if (true === $kernelRequest->hasResponse()) {
+                return $kernelRequest->getResponse();
+            }
+
+            if (null === $kernelRequest->getController()) {
+                throw ControllerException::createForControllerNotFound($request);
+            }
+
+            $kernelController = new KernelController(
+                $kernelRequest->getController(),
+                $request
+            );
+            $this->eventDispatcher->dispatch($kernelRequest);
+
+            if (null === $kernelController->getResponse()) {
+                throw ControllerException::createForEmptyResponse($request);
+            }
+
+            $kernelResponse = new KernelResponse($kernelController->getResponse());
+            $this->eventDispatcher->dispatch($kernelResponse);
+
+            return $kernelResponse->getResponse();
+        } catch (\Exception $exception) {
+            $kernelException = new \Mmi\Event\KernelException($request, $exception);
+            $this->eventDispatcher->dispatch($kernelException);
+
+            if (null !== $response = $kernelException->getResponse()) {
+                return $response;
+            }
+
+            throw $exception;
         }
+    }
 
-        $kernelController = new KernelController(
-            $kernelRequest->getController(), $request
-        );
-        $this->eventDispatcher->dispatch($kernelRequest);
-
-        if (null === $kernelController->getResponse()) {
-            throw new \Exception('No response');
-        }
-
-        $kernelResponse = new KernelResponse($kernelController->getResponse());
-        $this->eventDispatcher->dispatch($kernelResponse);
-
-        return $kernelResponse->getResponse();
+    public function terminate(): void
+    {
+        $this->eventDispatcher->dispatch(new KernelTerminate());
     }
 }

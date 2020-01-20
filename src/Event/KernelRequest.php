@@ -10,8 +10,9 @@ use Symfony\Contracts\EventDispatcher\Event;
  * Class KernelRequestEvent
  * Package Mmi\Event
  */
-class KernelRequestEvent extends Event
+class KernelRequest extends Event
 {
+    use EventWithResponseTrait;
     /** @var Request */
     private $request;
 
@@ -47,9 +48,9 @@ class KernelRequestEvent extends Event
     /**
      * @param callable|null $controller
      *
-     * @return KernelRequestEvent
+     * @return KernelRequest
      */
-    public function setController(?callable $controller): KernelRequestEvent
+    public function setController(?callable $controller): KernelRequest
     {
         $this->controller = $controller;
 

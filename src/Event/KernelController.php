@@ -4,13 +4,15 @@ declare(strict_types=1);
 namespace Mmi\Event;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * Class KernelController
  * Package Mmi\Event
  */
-class KernelController extends AbstractResponseEvent
+class KernelController extends Event
 {
+    use EventWithResponseTrait;
     /** @var callable */
     private $controller;
 
