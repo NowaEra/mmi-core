@@ -7,6 +7,8 @@ use Mmi\App\HttpKernel;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -14,16 +16,23 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Class CoreExtension
  * Package Mmi\DependencyInjection
  */
-class CoreExtension extends Extension
+class CoreExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * @param ContainerBuilder $container
+     */
+    public function prepend(ContainerBuilder $container)
+    {
+        $this->registerEventDispatcher($container);
+        $this->registerHttpKernel($container);
+    }
+
     /**
      * @param array            $configs
      * @param ContainerBuilder $container
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $this->registerEventDispatcher($container);
-        $this->registerHttpKernel($container);
     }
 
     private function registerEventDispatcher(ContainerBuilder $builder): void
@@ -36,7 +45,8 @@ class CoreExtension extends Extension
     private function registerHttpKernel(ContainerBuilder $builder): void
     {
         $definition = new Definition(HttpKernel::class);
-        $definition->addArgument(EventDispatcherInterface::class);
+        $definition->setPublic(true);
+        $definition->addArgument(new Reference(EventDispatcherInterface::class));
         $builder->setDefinition(HttpKernel::class, $definition);
         $builder->setAlias('http_kernel', HttpKernel::class);
     }

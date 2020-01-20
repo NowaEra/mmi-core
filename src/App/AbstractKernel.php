@@ -66,8 +66,8 @@ abstract class AbstractKernel
 
     private function prepareContainer(ContainerBuilder $builder): void
     {
-        $builder->getParameterBag()->add($this->getKernelParameters());
         $builder->registerExtension(new CoreExtension());
+        $builder->getParameterBag()->add($this->getKernelParameters());
         $builder->set('kernel', $this);
     }
 
@@ -78,7 +78,6 @@ abstract class AbstractKernel
             mkdir(dirname($file), 0777, true);
         }
         $containerConfigCache = new ConfigCache($file, $this->debug);
-
         if (false === $containerConfigCache->isFresh()) {
             $containerBuilder = new ContainerBuilder();
             $this->prepareContainer($containerBuilder);
@@ -92,13 +91,6 @@ abstract class AbstractKernel
         }
         require_once $file;
         $this->container = new \MmiCachedContainer();
-    }
-
-    protected function getContainerBuilder(): ContainerBuilder
-    {
-        $builder = new ContainerBuilder();
-
-        return $builder;
     }
 
     protected function getCacheDir(): string
@@ -123,11 +115,13 @@ abstract class AbstractKernel
 
     protected function getHttpKernel(): HttpKernel
     {
-        return $this->container->get('http_kernel');
+        return $this->container->get(HttpKernel::class);
     }
 
     public function handle(Request $request): Response
     {
+        $this->boot();
+
         return $this->getHttpKernel()->handle($request);
     }
 }
