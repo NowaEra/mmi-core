@@ -12,6 +12,8 @@ namespace Mmi\App;
 
 /**
  * Klasa konfiguracji aplikacji
+ *
+ * @Dep
  */
 abstract class KernelConfig
 {
