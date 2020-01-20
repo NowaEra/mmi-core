@@ -3,10 +3,15 @@ declare(strict_types=1);
 
 namespace Mmi\App;
 
+use Mmi\DependencyInjection\CoreExtension;
+use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class AbstractKernel
@@ -25,13 +30,31 @@ abstract class AbstractKernel
     /** @var bool */
     protected $booted = false;
 
+    /** @var Container */
+    protected $container;
+
     public function __construct(string $env, bool $debug = false)
     {
         $this->env   = $env;
         $this->debug = $debug;
     }
 
-    public function boot(): void
+    /**
+     * @return ExtensionInterface[]
+     */
+    abstract protected function getExtensions(): array;
+
+    /**
+     * @return CompilerPassInterface[]
+     */
+    abstract protected function getCompilerPasses(): array;
+
+    /**
+     * @return string
+     */
+    abstract protected function getProjectDir(): string;
+
+    protected function boot(): void
     {
         if (true === $this->booted) {
             return;
@@ -44,6 +67,8 @@ abstract class AbstractKernel
     private function prepareContainer(ContainerBuilder $builder): void
     {
         $builder->getParameterBag()->add($this->getKernelParameters());
+        $builder->registerExtension(new CoreExtension());
+        $builder->set('kernel', $this);
     }
 
     private function dumpContainer(): void
@@ -52,22 +77,21 @@ abstract class AbstractKernel
         if (false === is_dir(dirname($file))) {
             mkdir(dirname($file), 0777, true);
         }
-        if (false === $this->debug && file_exists($file)) {
-            require_once $file;
-            $container = new \MmiCachedContainer();
-        } else {
-            $containerBuilder = $this->getContainerBuilder();
+        $containerConfigCache = new ConfigCache($file, $this->debug);
+
+        if (false === $containerConfigCache->isFresh()) {
+            $containerBuilder = new ContainerBuilder();
             $this->prepareContainer($containerBuilder);
             $containerBuilder->compile();
 
-            if (false === $this->debug) {
-                $dumper = new PhpDumper($containerBuilder);
-                file_put_contents(
-                    $file,
-                    $dumper->dump(['class' => 'MmiCachedContainer'])
-                );
-            }
+            $dumper = new PhpDumper($containerBuilder);
+            $containerConfigCache->write(
+                $dumper->dump(['class' => 'MmiCachedContainer']),
+                $containerBuilder->getResources()
+            );
         }
+        require_once $file;
+        $this->container = new \MmiCachedContainer();
     }
 
     protected function getContainerBuilder(): ContainerBuilder
@@ -97,18 +121,13 @@ abstract class AbstractKernel
         ];
     }
 
-    /**
-     * @return ExtensionInterface[]
-     */
-    abstract protected function getExtensions(): array;
+    protected function getHttpKernel(): HttpKernel
+    {
+        return $this->container->get('http_kernel');
+    }
 
-    /**
-     * @return CompilerPassInterface[]
-     */
-    abstract protected function getCompilerPasses(): array;
-
-    /**
-     * @return string
-     */
-    abstract protected function getProjectDir(): string;
+    public function handle(Request $request): Response
+    {
+        return $this->getHttpKernel()->handle($request);
+    }
 }
