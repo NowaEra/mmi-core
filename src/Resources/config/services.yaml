@@ -1,0 +1,20 @@
+services:
+    controller_resolver:
+        class: Symfony\Component\HttpKernel\Controller\ControllerResolver
+
+    request_stack:
+        class: Symfony\Component\HttpFoundation\RequestStack
+
+    event_dispatcher:
+        class: Symfony\Component\EventDispatcher\EventDispatcher
+
+    argument_resolver:
+        class: Symfony\Component\HttpKernel\Controller\ArgumentResolver
+
+    http_kernel:
+        class: Symfony\Component\HttpKernel\HttpKernel
+        arguments:
+            - "@event_dispatcher"
+            - "@controller_resolver"
+            - "@request_stack"
+            - "@argument_resolver"
