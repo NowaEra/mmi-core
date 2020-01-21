@@ -13,6 +13,7 @@ services:
 
     http_kernel:
         class: Symfony\Component\HttpKernel\HttpKernel
+        public: true
         arguments:
             - "@event_dispatcher"
             - "@controller_resolver"
