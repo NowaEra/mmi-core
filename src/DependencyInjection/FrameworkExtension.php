@@ -9,10 +9,11 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 /**
- * Class CoreExtension
- * Package Mmi\DependencyInjection
+ * Class FrameworkExtension
+ *
+ * @package Mmi\DependencyInjection
  */
-class CoreExtension extends Extension
+class FrameworkExtension extends Extension
 {
 
     /**
